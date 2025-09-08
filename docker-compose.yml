@@ -41,15 +41,31 @@ services:
       - /opt/certs/postgres.crt:/var/lib/postgresql/server.crt:ro
       - /opt/certs/postgres.key:/var/lib/postgresql/server.key:ro
 
-  ddclient:
-    image: lscr.io/linuxserver/ddclient:latest
-    container_name: ddclient
+  cloudflare-ddns:
+    image: oznu/cloudflare-ddns:latest
+    restart: always
+    environment:
+      - API_KEY=xxxxxxx
+      - ZONE=example.com
+      - SUBDOMAIN=subdomain
+      - PROXIED=false
+
+  fail2ban:
+    image: lscr.io/linuxserver/fail2ban:latest
+    container_name: fail2ban
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    network_mode: host
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/Rome
+      - TZ=Etc/UTC
+      - VERBOSITY=-vv #optional
     volumes:
-      - /opt/ddclient/config:/config
+      - /opt/fail2ban/config:/config
+      - /var/log:/var/log:ro
+      - /opt/forgejo/gitea/config/log:/remotelogs/forgejo:ro
     restart: unless-stopped
 
   watchtower:
